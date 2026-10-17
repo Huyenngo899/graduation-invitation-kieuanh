@@ -174,33 +174,6 @@
           rgba(253, 249, 244, 0) 100%);
     }
 
-    /* Đáy page 2 mờ dần sang màu nền (giống đáy page 1) */
-    .page2-bottom-fade {
-      position: absolute;
-      --fade: 300px;
-      --solid: 20px;
-      --end: 4040px; /* đáy page 2 */
-      left: 0;
-      width: 1080px;
-      height: calc(var(--fade) + var(--solid));
-      top: calc(var(--end) - var(--fade) - var(--solid));
-      z-index: 2;
-      pointer-events: none;
-      background: linear-gradient(to bottom,
-          rgba(253, 249, 244, 0) 0,
-          rgba(253, 249, 244, 0.03) calc(var(--fade) * 0.1),
-          rgba(253, 249, 244, 0.10) calc(var(--fade) * 0.2),
-          rgba(253, 249, 244, 0.20) calc(var(--fade) * 0.3),
-          rgba(253, 249, 244, 0.34) calc(var(--fade) * 0.4),
-          rgba(253, 249, 244, 0.50) calc(var(--fade) * 0.5),
-          rgba(253, 249, 244, 0.66) calc(var(--fade) * 0.6),
-          rgba(253, 249, 244, 0.80) calc(var(--fade) * 0.7),
-          rgba(253, 249, 244, 0.91) calc(var(--fade) * 0.8),
-          rgba(253, 249, 244, 0.97) calc(var(--fade) * 0.9),
-          #fdf9f4 var(--fade),
-          #fdf9f4 100%);
-    }
-
     /* ===== NỘI DUNG CHỮ PAGE 1 ===== */
     .invitation {
       position: absolute;
@@ -1130,7 +1103,6 @@
       </section>
 
       <div class="page2-fade" aria-hidden="true"></div>
-      <div class="page2-bottom-fade" aria-hidden="true"></div>
 
       <!-- Chữ cố định ở page 2 (nội dung được điền theo danh xưng trong script) -->
       <p class="page2-text contact-note" id="contactNote"></p>
@@ -1216,7 +1188,7 @@
   </div>
 
   <!-- Đổi v=2 thành v=3, v=4... mỗi lần sửa guests.js để điện thoại không dùng bản cũ -->
-  <script src="guests.js?v=2"></script>
+  <script src="guests.js?v=3"></script>
   <script>
     (() => {
       const PAGE_W = 1080;
@@ -1367,15 +1339,12 @@
         await typeWriter(document.getElementById("intro"), 20);
         await wait(80);
 
-        /* 4. "Thân mời", đường kẻ, "đến dự..." hiện cùng lúc (fade),
-              riêng tên người được mời thì đánh chữ dần */
+        /* 4. "Thân mời", đường kẻ, "đến dự..." (fade), giờ, trường, địa chỉ
+              (đánh chữ song song) và ngày tháng (cuộn dọc) hiện CÙNG LÚC */
         fadeIn("inviteLabel");
         fadeIn("eventIntro");
         showElement("nameLine", "draw");
-        await typeWriter(document.getElementById("guestName"), 65);
-        await wait(250);
 
-        /* 5. Giờ, trường, địa chỉ: đánh chữ song song */
         const group = [
           ["eventTime", 48],
           ["university", 19],
@@ -1384,17 +1353,20 @@
 
         group.forEach(([id]) => showElement(id));
 
-        await Promise.all(
-          group.map(([id, speed]) => typeWriter(document.getElementById(id), speed))
-        );
-
-        /* 6. Ngày tháng cuộn dọc + hai đường trang trí */
         const dateEl = document.getElementById("eventDate");
         const rollTime = rollDate(dateEl);
         showElement("ornamentOne", "show");
         showElement("ornamentTwo", "show");
-        await wait(rollTime);
+
+        await Promise.all([
+          ...group.map(([id, speed]) => typeWriter(document.getElementById(id), speed)),
+          wait(rollTime)
+        ]);
         dateEl.classList.add("glow");
+        await wait(300);
+
+        /* 6. Tên người được mời hiện CUỐI CÙNG (đánh chữ dần) */
+        await typeWriter(document.getElementById("guestName"), 65);
         await wait(300);
 
         /* 7. Page 1 xong → cho cuộn xuống page 2 */
