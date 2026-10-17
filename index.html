@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Thư mời tốt nghiệp</title>
+  <meta name="description" content="Thư mời tốt nghiệp">
+
+  <!-- Tải trước ảnh bìa -->
+  <link rel="preload" as="image" href="images/foward_page.png">
+  <link rel="preload" as="image" href="images/behind_page.png">
+  <link rel="preload" as="image" href="images/button.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Cormorant+SC:wght@400;500;600;700&family=Yeseva+One&display=swap"
+    rel="stylesheet">
+
+  <style>
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: #262939;
+    }
+
+    body { overflow: hidden; }
+
+    /* ===== MÀN HÌNH CHỜ ===== */
+    
+    .loader {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #262939;
+      transition: opacity 0.5s ease, visibility 0s linear 0.5s;
+    }
+
+    .loader.hide { opacity: 0; visibility: hidden; }
+
+    .loader i {
+      width: 34px;
+      height: 34px;
+      border: 3px solid rgba(255, 255, 255, 0.25);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Vùng cuộn dọc. Khoá cuộn (.locked) cho tới khi page 1 hiện xong. */
+    .stage {
+      position: fixed;
+      inset: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      background: #262939;
+      overscroll-behavior-y: contain;
+      scrollbar-width: none;
+    }
+
+    .stage::-webkit-scrollbar { display: none; }
+
+    .stage.locked {
+      overflow-y: hidden;
+      touch-action: none;
+    }
+
+    .scroll-space {
+      position: relative;
+      width: 100%;
+      height: 100px;
+    }
+
+    /* Khung gốc 1080px: page 1 (0–1920), dải nền (1920–2120), page 2 (2120–4040) */
+    .frame {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 1080px;
+      height: 4040px;
+      overflow: visible;
+      transform-origin: top center;
+      background: #fdf9f4;
+      opacity: 0; /* ẩn cho tới khi ảnh bìa sẵn sàng */
+    }
+
+    .frame.ready {
+      opacity: 1;
+      transition: opacity 0.4s ease;
+    }
+
+    /* ===== ẢNH NỀN PAGE 1 ===== */
+    .background-image {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      width: 1080px;
+      height: 1920px;
+    }
+
+    .background-image img,
+    .panel img,
+    .page2 img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      border: 0;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .background-image img,
+    .panel img { pointer-events: none; }
+
+    /* Đáy page 1 mờ dần sang màu nền page 2 */
+    .page-fade {
+      position: absolute;
+      top: 1720px;
+      left: 0;
+      width: 1080px;
+      height: 201px;
+      z-index: 2;
+      pointer-events: none;
+      background: linear-gradient(to bottom,
+          rgba(253, 249, 244, 0) 0%,
+          rgba(253, 249, 244, 0.30) 25%,
+          rgba(253, 249, 244, 0.65) 50%,
+          rgba(253, 249, 244, 0.92) 78%,
+          #fdf9f4 100%);
+    }
+
+    /* Dải nền đặc giữa page 1 và page 2 */
+    .page-gap {
+      position: absolute;
+      top: 1920px;
+      left: 0;
+      width: 1080px;
+      height: 200px;
+      z-index: 2;
+      background: #fdf9f4;
+      pointer-events: none;
+    }
+
+    /* Đầu page 2 mờ vào từ màu nền */
+    .page2-fade {
+      position: absolute;
+      top: 2119px;
+      left: 0;
+      width: 1080px;
+      height: 161px;
+      z-index: 2;
+      pointer-events: none;
+      background: linear-gradient(to bottom,
+          #fdf9f4 0%,
+          rgba(253, 249, 244, 0.85) 30%,
+          rgba(253, 249, 244, 0.4) 65%,
+          rgba(253, 249, 244, 0) 100%);
+    }
+
+    /* Đáy page 2 mờ dần sang màu nền (giống đáy page 1) */
+    .page2-bottom-fade {
+      position: absolute;
+      /* ===== CHỈNH Ở ĐÂY =====
+         --fade  : độ dài đoạn mờ dần (tính từ trên xuống), càng lớn càng mờ từ xa
+         --solid : độ dài đoạn màu #fdf9f4 đặc ở sát đáy page 2 */
+      --fade: 300px;
+      --solid: 20px;
+      --end: 4040px; /* đáy page 2 */
+      left: 0;
+      width: 1080px;
+      height: calc(var(--fade) + var(--solid));
+      top: calc(var(--end) - var(--fade) - var(--solid));
+      z-index: 2;
+      pointer-events: none;
+      /* nhiều điểm dừng theo đường cong ease; sau điểm cuối là màu đặc */
+      background: linear-gradient(to bottom,
+          rgba(253, 249, 244, 0) 0,
+          rgba(253, 249, 244, 0.03) calc(var(--fade) * 0.1),
+          rgba(253, 249, 244, 0.10) calc(var(--fade) * 0.2),
+          rgba(253, 249, 244, 0.20) calc(var(--fade) * 0.3),
+          rgba(253, 249, 244, 0.34) calc(var(--fade) * 0.4),
+          rgba(253, 249, 244, 0.50) calc(var(--fade) * 0.5),
+          rgba(253, 249, 244, 0.66) calc(var(--fade) * 0.6),
+          rgba(253, 249, 244, 0.80) calc(var(--fade) * 0.7),
+          rgba(253, 249, 244, 0.91) calc(var(--fade) * 0.8),
+          rgba(253, 249, 244, 0.97) calc(var(--fade) * 0.9),
+          #fdf9f4 var(--fade),
+          #fdf9f4 100%);
+    }
+
+    /* ===== NỘI DUNG CHỮ PAGE 1 ===== */
+    .invitation {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 5;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .text {
+      position: absolute;
+      opacity: 0;
+      visibility: hidden;
+      white-space: pre-wrap;
+    }
+
+    .text.visible {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    /* Hiện đơn giản: mờ → rõ, trồi nhẹ lên */
+    .text.fade {
+      visibility: visible;
+      animation: fadeIn 0.7s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 1. IT'S MY */
+    .kicker {
+      top: 4.5%;
+      left: 10%;
+      font-family: "Cormorant SC", serif;
+      font-size: 40px;
+      font-weight: 500;
+      color: #000000;
+      letter-spacing: 0.5px;
+      transform: translateY(-65px);
+    }
+
+    .kicker.fall { animation: fallIn 0.85s cubic-bezier(.2, .75, .3, 1.2) forwards; }
+
+    @keyframes fallIn {
+      0% { opacity: 0; transform: translateY(-65px); }
+      70% { opacity: 1; transform: translateY(7px); }
+      85% { transform: translateY(-3px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 2. GRADUATION */
+    .graduation {
+      top: 8%;
+      left: 5%;
+      width: 90%;
+      min-height: 190px;
+      font-family: "Alex Brush", cursive;
+      font-size: 170px;
+      font-weight: 400;
+      line-height: 1.2;
+      color: #000000;
+      text-align: center;
+      white-space: nowrap;
+      text-shadow:
+        -3px 3px 2px rgba(24, 0, 173, 0.25),
+        0 0 8px rgba(24, 0, 173, 0.12);
+    }
+
+    .page-icon {
+      position: absolute;
+      left: 915px;
+      top: 150px;
+      width: 90px;
+      height: 80px;
+      opacity: 0;
+      visibility: hidden;
+      object-fit: fill;
+    }
+
+    .page-icon.show {
+      visibility: visible;
+      animation: iconTwinkle 1.8s ease-in-out infinite;
+    }
+
+    @keyframes iconTwinkle {
+      0%, 100% { opacity: 0.7; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Các vì sao trắng nhấp nháy ở dưới page 1 */
+    .star {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      opacity: 0;
+      visibility: hidden;
+      filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.7));
+    }
+
+    .star.show {
+      visibility: visible;
+      animation: starTwinkle var(--dur, 1.8s) ease-in-out var(--d, 0s) infinite both;
+    }
+
+    @keyframes starTwinkle {
+      0%, 100% { opacity: 0; transform: scale(0.45); }
+      35% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.65; transform: scale(0.9); }
+      68% { opacity: 1; transform: scale(1.06); }
+    }
+
+    /* 3. LỜI NHẮN */
+    .intro {
+      top: 20%;
+      left: 6.5%;
+      width: 87%;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 30px;
+      font-weight: 500;
+      font-style: italic;
+      line-height: 1.6;
+      color: #1d3969;
+    }
+
+    /* 4. THÂN MỜI */
+    .invite-label {
+      top: 32.3%;
+      left: 7%;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 45px;
+      font-weight: 500;
+      color: #000000;
+    }
+
+    .guest-name {
+      top: 29.2%;
+      left: 25%;
+      width: 52%;
+      text-align: center;
+      font-family: "Alex Brush", cursive;
+      font-size: 85px;
+      font-weight: 400;
+      line-height: 1.25;
+      color: #203f73;
+    }
+
+    /* Đường kẻ dưới tên */
+    .name-line {
+      position: absolute;
+      top: 34.65%;
+      left: 25%;
+      width: 52%;
+      height: 1.5px;
+      background: #000000;
+      opacity: 0;
+    }
+
+    .name-line.draw { animation: fadeIn 0.7s ease forwards; }
+
+    /* 5. LỜI MỜI DỰ LỄ */
+    .event-intro {
+      top: 36.7%;
+      left: 8%;
+      width: 84%;
+      text-align: center;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 22px;
+      font-weight: 500;
+      color: #000000;
+    }
+
+    /* 6. GIỜ */
+    .event-time {
+      top: 40.2%;
+      left: 15%;
+      width: 70%;
+      text-align: center;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 40px;
+      font-weight: 600;
+      color: #000000;
+      letter-spacing: 1px;
+    }
+
+    /* 7. NGÀY THÁNG */
+    .event-date {
+      top: 45.2%;
+      left: 15%;
+      width: 70%;
+      text-align: center;
+      font-family: "Yeseva One", serif;
+      font-size: 50px;
+      font-weight: 400;
+      line-height: 1.4;
+      color: #152b63;
+      white-space: nowrap;
+      text-shadow:
+        0 0 4px rgba(21, 43, 99, 0.45),
+        0 0 12px rgba(21, 43, 99, 0.3);
+    }
+
+    .date-char {
+      display: inline-block;
+      white-space: pre;
+      opacity: 0;
+      animation: charRoll 0.9s cubic-bezier(.22, 1, .36, 1) forwards;
+    }
+
+    @keyframes charRoll {
+      0% { opacity: 0; transform: translateY(80px); filter: blur(8px); }
+      65% { opacity: 1; transform: translateY(-8px); filter: blur(0); }
+      82% { transform: translateY(3px); }
+      100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
+
+    .event-date.glow { animation: dateGlow 2s ease-in-out infinite alternate; }
+
+    @keyframes dateGlow {
+      from {
+        text-shadow: 0 0 4px rgba(21, 43, 99, 0.4), 0 0 10px rgba(21, 43, 99, 0.2);
+      }
+      to {
+        text-shadow:
+          0 0 8px rgba(21, 43, 99, 0.8),
+          0 0 20px rgba(21, 43, 99, 0.5),
+          0 0 34px rgba(75, 111, 190, 0.35);
+      }
+    }
+
+    /* Đường trang trí trên và dưới ngày */
+    .ornament {
+      position: absolute;
+      left: 34%;
+      width: 34%;
+      height: 1px;
+      background: linear-gradient(to right, transparent, #304d7a 15%, #304d7a 85%, transparent);
+      opacity: 0;
+    }
+
+    .ornament::after {
+      content: "❧";
+      position: absolute;
+      top: -12px;
+      left: 48%;
+      color: #304d7a;
+      font-size: 17px;
+    }
+
+    .ornament.one { top: 43.7%; }
+    .ornament.two { top: 50.9%; }
+    .ornament.show { animation: ornamentIn 0.8s ease forwards; }
+
+    @keyframes ornamentIn {
+      from { opacity: 0; }
+      to { opacity: 0.85; }
+    }
+
+    /* 8. TRƯỜNG VÀ ĐỊA CHỈ */
+    .university,
+    .address {
+      left: 5%;
+      width: 90%;
+      text-align: center;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 25px;
+      font-weight: 700;
+      line-height: 1.5;
+      color: #000000;
+    }
+
+    .university { top: 52.3%; }
+
+    .address {
+      top: 54.7%;
+      left: 7%;
+      width: 86%;
+    }
+
+    .group-text {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .group-text.visible {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    /* Icon trước giờ và trước tên trường: tô bằng currentColor nên luôn trùng màu chữ.
+       Chỉnh cỡ icon bằng width/height (em), khoảng cách tới chữ bằng margin-right. */
+    .event-time,
+    .university {
+      --icon-size: 0.85em;
+      --icon-gap: 0.35em;
+    }
+
+    .event-time::before,
+    .university::before {
+      content: "";
+      display: inline-block;
+      width: var(--icon-size);
+      height: var(--icon-size);
+      margin-right: var(--icon-gap);
+      vertical-align: var(--icon-y, -0.08em);
+      background-color: currentColor;
+      -webkit-mask: var(--icon) center / contain no-repeat;
+      mask: var(--icon) center / contain no-repeat;
+    }
+
+    /* Đồng hồ */
+    .event-time {
+      --icon-y: -0.2em; /* càng âm icon càng thấp, càng gần 0 icon càng cao */
+      --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='none' stroke='black' stroke-width='2.2'/%3E%3Cpath d='M12 6.8V12l3.6 2.2' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    }
+
+    /* Ghim địa chỉ */
+    .university {
+      --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' fill-rule='evenodd' d='M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z'/%3E%3C/svg%3E");
+    }
+
+    /* ===== COUNTDOWN – cuối PAGE 2 ===== */
+    .countdown {
+      position: absolute;
+      z-index: 6;
+      top: 3408px;
+      left: 5%;
+      width: 90%;
+      height: 112px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 18px;
+      text-align: center;
+      isolation: isolate;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(24px);
+      transition: opacity 0.9s ease, transform 0.9s ease, visibility 0s linear 0.9s;
+    }
+
+    .countdown.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      transition: opacity 0.9s ease, transform 0.9s ease, visibility 0s;
+    }
+
+    .countdown-item {
+      position: relative;
+      width: 100px;
+      flex: 0 0 100px;
+      z-index: 1;
+    }
+
+    .countdown-number {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100px;
+      height: 86px;
+      overflow: hidden;
+      border: 2px solid #c7c7c7;
+      background: linear-gradient(to bottom, #292929 0%, #292929 49.5%, #101010 50%, #242424 100%);
+      box-shadow: inset 0 0 0 2px #555, 0 2px 3px #777;
+      color: #ededed;
+      font-family: "Cormorant SC", serif;
+      font-size: 52px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 1px #777;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .countdown-number::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: rgba(0, 0, 0, .65);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .15);
+    }
+
+    .countdown-label {
+      display: block;
+      margin-top: 7px;
+      color: #333;
+      font-family: "Cormorant SC", serif;
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    /* Canvas confetti + pháo hoa */
+    #fx {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 15;
+      pointer-events: none;
+    }
+
+    /* ===== PAGE 2 ===== */
+    .page2 {
+      position: absolute;
+      top: 2120px;
+      left: 0;
+      width: 1080px;
+      height: 1920px;
+      z-index: 1;
+      background: #fdf9f4;
+    }
+
+    .map-wrap {
+      position: absolute;
+      top: 2360px; /* y = 240px trong page 2 */
+      right: 15px;
+      z-index: 6;
+    }
+
+    /* ===== CHỮ CỐ ĐỊNH Ở PAGE 2 =====
+       Toạ độ y tính từ đầu page 2 (page 2 bắt đầu ở y = 2120 của khung):
+       top = 2120 + y */
+    .page2-text {
+      position: absolute;
+      left: 0;
+      width: 1080px;
+      margin: 0;
+      z-index: 6;
+      text-align: center;
+      white-space: pre-line;
+      font-family: "Cormorant Garamond", serif;
+      font-weight: 500;
+      line-height: 1.2; /* khoảng cách giữa các dòng, giảm để các dòng sát nhau hơn */
+      color: #000000;
+      pointer-events: none;
+    }
+
+    /* "Để thuận tiện cho việc gặp nhau...": y = 995 */
+    .contact-note {
+      top: 3115px;
+      font-size: 20px;
+      white-space: nowrap; /* luôn 1 dòng */
+    }
+
+    /* "Đây là ngày mà mình muốn lưu giữ...": y = 1120 */
+    .photo-note {
+      top: 3240px;
+      font-size: 25px;
+    }
+
+    .phone-wrap {
+      position: absolute;
+      left: 393.9px;
+      top: 3167.6px; /* y = 1047.6 trong page 2 */
+      width: 292.2px;
+      height: 48px;
+      z-index: 6;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(18px) scale(0.92);
+      pointer-events: none;
+      transition: opacity 0.8s ease, transform 0.8s ease, visibility 0s linear 0.8s;
+    }
+
+    .phone-wrap.show {
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+      pointer-events: auto;
+      transition: opacity 0.8s ease, transform 0.8s ease, visibility 0s;
+    }
+
+    .map-wrap::after,
+    .phone-wrap::after {
+      content: "";
+      position: absolute;
+      inset: -16px;
+      pointer-events: none;
+    }
+
+    .map-btn,
+    .phone-btn {
+      position: relative;
+      z-index: 2;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border: 0;
+      border-radius: 20px;
+      background: #fff6ec;
+      color: #152b63;
+      font-family: "Yeseva One", serif;
+      line-height: 1;
+      text-decoration: none;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+      animation: btnGlow 2.2s ease-in-out infinite;
+    }
+
+    .map-btn {
+      gap: 10px;
+      padding: 10px 70px;
+      font-size: 20px;
+    }
+
+    .map-btn svg {
+      width: 26px;
+      height: 26px;
+      flex: none;
+    }
+
+    .phone-btn {
+      width: 100%;
+      height: 100%;
+      font-size: 16px;
+    }
+
+    @keyframes btnGlow {
+      0%, 100% {
+        box-shadow: 0 3px 3px rgba(21, 43, 99, 0.22),
+          0 0 12px 2px rgba(255, 205, 150, 0.6),
+          0 0 0 0 rgba(255, 225, 180, 0.55);
+      }
+      50% {
+        box-shadow: 0 3px 3px rgba(21, 43, 99, 0.22),
+          0 0 28px 8px rgba(255, 200, 140, 0.95),
+          0 0 0 16px rgba(255, 225, 180, 0);
+      }
+    }
+
+    /* Sao nhỏ lấp lánh quanh nút */
+    .spark {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      pointer-events: none;
+      opacity: 0;
+      filter: drop-shadow(0 0 3px rgba(255, 190, 120, 0.9));
+      animation: starTwinkle 1.6s ease-in-out infinite both;
+    }
+
+    .spark.s1 { left: -10px; top: -12px; animation-delay: 0s; }
+    .spark.s2 { right: -8px; top: -14px; animation-delay: 0.5s; width: 14px; height: 14px; }
+    .spark.s3 { right: 16px; bottom: -14px; animation-delay: 0.9s; }
+    .spark.s4 { left: 24px; bottom: -12px; animation-delay: 0.3s; width: 12px; height: 12px; }
+    .spark.s5 { left: calc(50% - 8px); top: -17px; animation-delay: 1.2s; width: 16px; height: 16px; }
+    .spark.s6 { left: -14px; top: calc(50% - 7px); animation-delay: 0.8s; width: 14px; height: 14px; }
+    .spark.s7 { right: -14px; top: calc(50% - 6px); animation-delay: 1.4s; width: 12px; height: 12px; }
+
+    /* ===== BÌA TRƯỚC / SAU ===== */
+    .cover {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 10;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    .cover .panel {
+      background: transparent !important;
+      overflow: hidden;
+    }
+
+    .cover .panel>img {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      border: 0;
+    }
+
+    .cover-title,
+    .cover-name {
+      left: 0;
+      width: 1080px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #ffffff;
+      line-height: 1;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    }
+
+    .cover-title {
+      top: 335px;
+      height: 60px;
+      font-family: "Cormorant SC", serif;
+      font-size: 40px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      transform: translateY(-65px);
+    }
+
+    .cover-title.fall { animation: fallIn 0.85s cubic-bezier(.2, .75, .3, 1.2) forwards; }
+
+    .cover-name {
+      top: 415px;
+      height: 100px;
+      font-family: "Alex Brush", cursive;
+      font-size: 75px;
+      font-weight: 400;
+    }
+
+    .cover-btn {
+      position: absolute;
+      left: 411.2px;
+      top: 842px;
+      width: 266.7px;
+      height: 259.2px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: none;
+      cursor: pointer;
+      isolation: isolate;
+      overflow: visible;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .cover-btn img {
+      position: relative;
+      z-index: 2;
+      animation: btnBreath 2.6s ease-in-out infinite;
+    }
+
+    @keyframes btnBreath {
+      0%, 100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 8px rgba(255, 210, 90, 0.55));
+      }
+      50% {
+        transform: scale(1.05);
+        filter: drop-shadow(0 0 22px rgba(255, 215, 100, 0.95));
+      }
+    }
+
+    .btn-glow {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 520px;
+      height: 520px;
+      margin: -260px 0 0 -260px;
+      border-radius: 50%;
+      z-index: 1;
+      pointer-events: none;
+      background: radial-gradient(circle,
+          rgba(255, 238, 170, 0.38) 0%,
+          rgba(255, 232, 150, 0.16) 40%,
+          rgba(255, 232, 150, 0) 68%);
+      animation: glowFlicker 2.4s ease-in-out infinite;
+    }
+
+    @keyframes glowFlicker {
+      0%, 100% { opacity: 0.55; transform: scale(0.92); }
+      20% { opacity: 1; transform: scale(1.04); }
+      45% { opacity: 0.65; transform: scale(0.96); }
+      70% { opacity: 0.95; transform: scale(1.06); }
+    }
+
+    .cover-btn::before,
+    .cover-btn::after,
+    .btn-wave {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 250px;
+      height: 250px;
+      margin: -125px 0 0 -125px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 240, 172, 0.55);
+      box-shadow: 0 0 14px rgba(255, 236, 150, 0.35), inset 0 0 12px rgba(255, 236, 150, 0.2);
+      z-index: 1;
+      opacity: 0;
+      pointer-events: none;
+      animation: waveOut 3s ease-out infinite;
+    }
+
+    .btn-wave { animation-delay: 1s; }
+    .cover-btn::after { animation-delay: 2s; }
+
+    @keyframes waveOut {
+      0% { opacity: 0.5; transform: scale(0.85); }
+      30% { opacity: 0.38; }
+      60% { opacity: 0.16; }
+      100% { opacity: 0; transform: scale(2.6); }
+    }
+
+    /* Thanh tiến độ đếm ngược 8s */
+    .cover-bar {
+      position: absolute;
+      left: 290px;
+      top: 1700px;
+      width: 500px;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.3);
+      overflow: hidden;
+    }
+
+    .cover-bar span {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 3px;
+      background: #ffffff;
+      transform-origin: center;
+    }
+
+    .cover-bar.run span { animation: barDown 8s linear forwards; }
+
+    @keyframes barDown {
+      from { transform: scaleX(1); }
+      to { transform: scaleX(0); }
+    }
+
+    /* Trước khi chữ bìa hiện xong: nút đứng yên, mờ, chưa bấm được */
+    .cover-btn img { transition: opacity 0.6s ease; }
+    .cover-bar { transition: opacity 0.6s ease; }
+
+    .cover:not(.ready) .cover-btn {
+      pointer-events: none;
+      cursor: default;
+    }
+
+    .cover:not(.ready) .cover-btn img {
+      animation: none;
+      opacity: 0.55; /* đổi thành 0 nếu muốn ẩn hẳn */
+    }
+
+    .cover:not(.ready) .btn-glow,
+    .cover:not(.ready) .btn-wave,
+    .cover:not(.ready) .cover-btn::before,
+    .cover:not(.ready) .cover-btn::after {
+      animation: none;
+      opacity: 0;
+    }
+
+    .cover:not(.ready) .cover-bar { opacity: 0; }
+
+    .cover.pressed .cover-btn,
+    .cover.pressed .cover-bar { display: none; }
+
+    .panel {
+      position: absolute;
+      inset: 0;
+      width: 1080px;
+      height: 1920px;
+      transition: transform 1.5s cubic-bezier(.65, 0, .35, 1);
+      will-change: transform;
+    }
+
+    .panel.bottom { z-index: 2; }
+    .panel.top { z-index: 3; }
+
+    .cover.open .panel.top { transform: translateY(-100%); }
+    .cover.open .panel.bottom { transform: translateY(100%); }
+
+    .cover.open {
+      pointer-events: none;
+      cursor: default;
+    }
+
+    .cover.gone { display: none; }
+
+    /* ===== GỢI Ý "LƯỚT XUỐNG" ===== */
+    .scroll-hint {
+      position: fixed;
+      left: 50%;
+      bottom: 14px;
+      z-index: 20;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffffff;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+      filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s ease;
+    }
+
+    .scroll-hint.show { opacity: 1; }
+
+    .scroll-hint svg { animation: hintBounce 1.4s ease-in-out infinite; }
+
+    @keyframes hintBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(6px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .btn-glow,
+      .btn-wave,
+      .cover-btn::before,
+      .cover-btn::after,
+      .cover-btn img { animation: none !important; }
+
+      .phone-btn,
+      .map-btn,
+      .spark { animation: none !important; }
+
+      .page-icon.show,
+      .star.show {
+        animation: none !important;
+        opacity: 1;
+      }
+
+      .panel,
+      .kicker,
+      .name-line,
+      .ornament,
+      .event-date,
+      .date-char,
+      .text.fade,
+      .countdown,
+      .scroll-hint svg {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="loader" id="loader" aria-hidden="true"><i></i></div>
+
+  <!-- Định nghĩa dùng chung cho sao lấp lánh -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <radialGradient id="sg" cx="50%" cy="50%" r="50%">
+        <stop offset="0" stop-color="#fff" stop-opacity="1" />
+        <stop offset="0.55" stop-color="#fff" stop-opacity="0.8" />
+        <stop offset="1" stop-color="#fff" stop-opacity="0.2" />
+      </radialGradient>
+      <symbol id="star-w" viewBox="0 0 40 40">
+        <path fill="url(#sg)"
+          d="M20 0C20.6 13 27 19.4 40 20C27 20.6 20.6 27 20 40C19.4 27 13 20.6 0 20C13 19.4 19.4 13 20 0Z" />
+      </symbol>
+      <symbol id="star-o" viewBox="0 0 40 40">
+        <path fill="#ffc78a"
+          d="M20 0C20.6 13 27 19.4 40 20C27 20.6 20.6 27 20 40C19.4 27 13 20.6 0 20C13 19.4 19.4 13 20 0Z" />
+      </symbol>
+    </defs>
+  </svg>
+
+  <div class="stage locked" id="stage">
+    <div class="scroll-space" id="scrollSpace"></div>
+
+    <div class="frame" id="frame">
+
+      <!-- ================= PAGE 1 ================= -->
+
+      <div class="background-image">
+        <img src="images/page1.png" alt="Nền thiệp tốt nghiệp">
+      </div>
+
+      <div class="page-fade" aria-hidden="true"></div>
+      <div class="page-gap" aria-hidden="true"></div>
+
+      <div class="invitation" id="invitation">
+
+        <div class="text kicker" id="kicker">It's my</div>
+
+        <div class="text graduation" id="graduation" data-text="Graduation"></div>
+
+        <img class="page-icon" id="pageIcon" src="images/icon.png" alt="">
+
+        <svg class="star" style="left:299.6px;top:1404px;--d:0s;--dur:1.8s" viewBox="0 0 40 40" aria-hidden="true"><use href="#star-w" /></svg>
+        <svg class="star" style="left:463.8px;top:1402.8px;--d:0.5s;--dur:2.1s" viewBox="0 0 40 40" aria-hidden="true"><use href="#star-w" /></svg>
+        <svg class="star" style="left:297.6px;top:1523.4px;--d:0.9s;--dur:1.9s" viewBox="0 0 40 40" aria-hidden="true"><use href="#star-w" /></svg>
+        <svg class="star" style="left:463.8px;top:1523.4px;--d:0.3s;--dur:2.3s" viewBox="0 0 40 40" aria-hidden="true"><use href="#star-w" /></svg>
+
+        <div class="text intro" id="intro"
+          data-text="Trong hành trình này của mình thật may mắn khi gặp được bạn, vì vậy mà mình rất mong chờ để được gửi lời yêu thương này ....">
+        </div>
+
+        <div class="text invite-label" id="inviteLabel" data-text="Thân mời:"></div>
+
+        <div class="text guest-name" id="guestName" data-text="Quỳnh Mai"></div>
+
+        <div class="name-line" id="nameLine"></div>
+
+        <div class="text event-intro" id="eventIntro" data-text="đến dự buổi lễ tốt nghiệp cùng mình vào lúc:"></div>
+
+        <div class="text event-time group-text" id="eventTime" data-text="10:30 - 12:00"></div>
+
+        <div class="ornament one" id="ornamentOne"></div>
+
+        <div class="text event-date group-text" id="eventDate" data-text="23 | 10 | 2026"></div>
+
+        <div class="ornament two" id="ornamentTwo"></div>
+
+        <div class="text university group-text" id="university" data-text="Trường Đại học Kinh tế - Luật, ĐHQG HCM">
+        </div>
+
+        <div class="text address group-text" id="address" data-text="669 Đỗ Mười, Khu phố 13, phường Linh Xuân, TP.HCM">
+        </div>
+
+      </div>
+
+      <!-- ================= PAGE 2 ================= -->
+
+      <section class="page2" id="page2" aria-label="Trang 2 thư mời">
+        <img src="images/page2.png" alt="Trang 2 của thư mời tốt nghiệp">
+      </section>
+
+      <div class="page2-fade" aria-hidden="true"></div>
+      <div class="page2-bottom-fade" aria-hidden="true"></div>
+
+      <!-- Chữ cố định ở page 2 (nội dung được điền theo danh xưng trong script) -->
+      <p class="page2-text contact-note" id="contactNote"></p>
+      <p class="page2-text photo-note" id="photoNote"></p>
+
+      <!-- Nút địa chỉ: mở Google Maps tới trường -->
+      <div class="map-wrap" id="mapWrap">
+        <a class="map-btn" id="mapBtn"
+          href="https://www.google.com/maps/search/?api=1&query=Tr%C6%B0%E1%BB%9Dng%20%C4%90%E1%BA%A1i%20h%E1%BB%8Dc%20Kinh%20t%E1%BA%BF%20-%20Lu%E1%BA%ADt%20%28UEL%29%2C%20669%20%C4%90%E1%BB%97%20M%C6%B0%E1%BB%9Di%2C%20Linh%20Xu%C3%A2n%2C%20Th%E1%BB%A7%20%C4%90%E1%BB%A9c%2C%20TP.HCM"
+          target="_blank" rel="noopener" aria-label="Xem địa chỉ trường trên Google Maps">
+          <svg viewBox="0 0 24 24" fill="#152b63" aria-hidden="true">
+            <path fill-rule="evenodd"
+              d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.500a2.5 2.5 0 0 1 0 5z" />
+          </svg>
+          <span>Địa chỉ: GGmap</span>
+        </a>
+        <svg class="spark s1" viewBox="0 0 40 40" aria-hidden="true"><use href="#star-o" /></svg>
+        <svg class="spark s2" viewBox="0 0 40 40" aria-hidden="true"><use href="#star-o" /></svg>
+        <svg class="spark s3" viewBox="0 0 40 40" aria-hidden="true"><use href="#star-o" /></svg>
+        <svg class="spark s4" viewBox="0 0 40 40" aria-hidden="true"><use href="#star-o" /></svg>
+        <svg class="spark s5" viewBox="0 0 40 40" aria-hidden="true"><use href="#star-o" /></svg>
+        <svg class="spark s6" viewBox="0 0 40 40" aria-hidden="true"><use href="#star-o" /></svg>
+        <svg class="spark s7" viewBox="0 0 40 40" aria-hidden="true"><use href="#star-o" /></svg>
+      </div>
+
+      <!-- Nút số điện thoại -->
+      <div class="phone-wrap" id="phoneWrap">
+        <a class="phone-btn" href="tel:0397572055" aria-label="Gọi 0397572055 - Kiều Anh">0397572055 - Kiều Anh</a>
+        <svg class="spark s1" viewBox="0 0 40 40" aria-hidden="true"><use href="#star-o" /></svg>
+        <svg class="spark s2" viewBox="0 0 40 40" aria-hidden="true"><use href="#star-o" /></svg>
+        <svg class="spark s3" viewBox="0 0 40 40" aria-hidden="true"><use href="#star-o" /></svg>
+        <svg class="spark s4" viewBox="0 0 40 40" aria-hidden="true"><use href="#star-o" /></svg>
+        <svg class="spark s5" viewBox="0 0 40 40" aria-hidden="true"><use href="#star-o" /></svg>
+        <svg class="spark s6" viewBox="0 0 40 40" aria-hidden="true"><use href="#star-o" /></svg>
+        <svg class="spark s7" viewBox="0 0 40 40" aria-hidden="true"><use href="#star-o" /></svg>
+      </div>
+
+      <!-- Countdown -->
+      <div class="countdown" id="countdown" aria-label="Đếm ngược đến ngày tốt nghiệp">
+        <div class="countdown-item"><span class="countdown-number" id="days">00</span><span
+            class="countdown-label">Days</span></div>
+        <div class="countdown-item"><span class="countdown-number" id="hours">00</span><span
+            class="countdown-label">Hrs</span></div>
+        <div class="countdown-item"><span class="countdown-number" id="minutes">00</span><span
+            class="countdown-label">Mins</span></div>
+        <div class="countdown-item"><span class="countdown-number" id="seconds">00</span><span
+            class="countdown-label">Secs</span></div>
+      </div>
+
+      <!-- ================= BÌA TRƯỚC / SAU ================= -->
+
+      <div class="cover" id="cover">
+        <div class="panel bottom">
+          <img src="images/behind_page.png" alt="">
+        </div>
+        <div class="panel top">
+          <img src="images/foward_page.png" alt="">
+
+          <div class="text cover-title" id="coverTitle" data-text="Chiếc thiệp yêu thương từ"></div>
+          <div class="text cover-name" id="coverName" data-text="Kiều Anh"></div>
+
+          <button class="cover-btn" id="coverBtn" type="button" aria-label="Chạm để mở thư mời">
+            <span class="btn-glow" aria-hidden="true"></span>
+            <span class="btn-wave" aria-hidden="true"></span>
+            <img src="images/button.png" alt="">
+          </button>
+
+          <div class="cover-bar" id="coverBar" aria-hidden="true"><span></span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <canvas id="fx" aria-hidden="true"></canvas>
+
+  <div class="scroll-hint" id="scrollHint" aria-hidden="true">
+    <span>Lướt xuống</span>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  </div>
+
+  <script src="guests.js"></script>
+  <script>
+    (() => {
+      const PAGE_W = 1080;
+      const PAGE_H = 1920;
+      const FRAME_H = 4040;
+      const AUTO_OPEN_MS = 8000;
+      const EVENT_TIME = "2026-10-23T10:30:00+07:00";
+      const COUNTDOWN_SHOW_RATIO = 0.5;
+
+      const frame = document.getElementById("frame");
+      const cover = document.getElementById("cover");
+      const coverBtn = document.getElementById("coverBtn");
+      const coverBar = document.getElementById("coverBar");
+      const stage = document.getElementById("stage");
+      const scrollSpace = document.getElementById("scrollSpace");
+      const countdown = document.getElementById("countdown");
+      const scrollHint = document.getElementById("scrollHint");
+
+      let started = false;
+      let autoTimer = null;
+      let lastW = 0;
+      let lastH = 0;
+
+      /* Co khung sao cho nguyên page 1 luôn vừa màn hình */
+      function resizeFrame() {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+
+        if (lastW && w === lastW && Math.abs(h - lastH) < 160) return;
+        lastW = w;
+        lastH = h;
+
+        const scale = Math.min(w / PAGE_W, h / PAGE_H);
+        frame.style.transform = `translateX(-50%) scale(${scale})`;
+        scrollSpace.style.height = `${FRAME_H * scale}px`;
+      }
+
+      function updateCountdown() {
+        const remaining = Math.max(0, new Date(EVENT_TIME).getTime() - Date.now());
+
+        const days = Math.floor(remaining / 86400000);
+        const hours = Math.floor((remaining % 86400000) / 3600000);
+        const minutes = Math.floor((remaining % 3600000) / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+
+        const pad = n => String(n).padStart(2, "0");
+        document.getElementById("days").textContent = pad(days);
+        document.getElementById("hours").textContent = pad(hours);
+        document.getElementById("minutes").textContent = pad(minutes);
+        document.getElementById("seconds").textContent = pad(seconds);
+      }
+
+      function wait(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+
+      /* Đánh chữ bằng requestAnimationFrame, dùng Array.from để không cắt lỗi Unicode */
+      function typeWriter(element, speed = 38) {
+        return new Promise(resolve => {
+          const chars = Array.from(element.dataset.text || "");
+          element.textContent = "";
+          element.classList.add("visible");
+
+          if (!chars.length) { resolve(); return; }
+
+          let index = 0;
+          let previousTime = 0;
+          let elapsed = 0;
+          const step = Math.max(12, speed);
+
+          function tick(now) {
+            if (!previousTime) previousTime = now;
+            elapsed += Math.min(now - previousTime, 48);
+            previousTime = now;
+
+            const nextIndex = Math.min(chars.length, Math.floor(elapsed / step) + 1);
+            if (nextIndex > index) {
+              index = nextIndex;
+              element.textContent = chars.slice(0, index).join("");
+            }
+
+            if (index < chars.length) requestAnimationFrame(tick);
+            else resolve();
+          }
+
+          requestAnimationFrame(tick);
+        });
+      }
+
+      function showElement(id, className = "visible") {
+        document.getElementById(id).classList.add(className);
+      }
+
+      /* Hiện chữ ngay (không đánh chữ) bằng hiệu ứng fade */
+      function fadeIn(id) {
+        const el = document.getElementById(id);
+        if (el.dataset.text !== undefined) el.textContent = el.dataset.text;
+        el.classList.add("fade");
+      }
+
+      function unlockScroll() {
+        stage.classList.remove("locked");
+        scrollHint.classList.add("show");
+      }
+
+      stage.addEventListener("scroll", () => {
+        if (stage.scrollTop > 40) scrollHint.classList.remove("show");
+
+        const maxScroll = stage.scrollHeight - stage.clientHeight;
+        if (maxScroll > 0 && stage.scrollTop > maxScroll * COUNTDOWN_SHOW_RATIO) {
+          countdown.classList.add("show");
+        }
+      }, { passive: true });
+
+      /* Ngày tháng: từng ký tự cuộn dọc hiện dần */
+      function rollDate(element) {
+        const text = element.dataset.text || "";
+        const STEP = 65;
+
+        element.textContent = "";
+        [...text].forEach((ch, i) => {
+          const span = document.createElement("span");
+          span.className = "date-char";
+          span.textContent = ch;
+          span.style.animationDelay = `${i * STEP}ms`;
+          element.appendChild(span);
+        });
+        element.classList.add("visible");
+
+        return text.length * STEP + 900;
+      }
+
+      async function playTextAnimation() {
+        document.querySelectorAll("#invitation .star").forEach(el => el.classList.add("show"));
+
+        /* 1. It's my rơi xuống */
+        showElement("kicker");
+        showElement("kicker", "fall");
+        await wait(260);
+
+        /* 2. Graduation */
+        await typeWriter(document.getElementById("graduation"), 75);
+        document.getElementById("pageIcon").classList.add("show");
+        await wait(70);
+
+        /* 3. Lời nhắn */
+        await typeWriter(document.getElementById("intro"), 20);
+        await wait(80);
+
+        /* 4. "Thân mời", đường kẻ, "đến dự..." hiện cùng lúc (fade),
+              riêng tên người được mời thì đánh chữ dần */
+        fadeIn("inviteLabel");
+        fadeIn("eventIntro");
+        showElement("nameLine", "draw");
+        await typeWriter(document.getElementById("guestName"), 65);
+        await wait(250);
+
+        /* 5. Giờ, trường, địa chỉ: đánh chữ song song */
+        const group = [
+          ["eventTime", 48],
+          ["university", 19],
+          ["address", 19]
+        ];
+
+        group.forEach(([id]) => showElement(id));
+
+        await Promise.all(
+          group.map(([id, speed]) => typeWriter(document.getElementById(id), speed))
+        );
+
+        /* 6. Ngày tháng cuộn dọc + hai đường trang trí */
+        const dateEl = document.getElementById("eventDate");
+        const rollTime = rollDate(dateEl);
+        showElement("ornamentOne", "show");
+        showElement("ornamentTwo", "show");
+        await wait(rollTime);
+        dateEl.classList.add("glow");
+        await wait(300);
+
+        /* 7. Page 1 xong → cho cuộn xuống page 2 */
+        unlockScroll();
+      }
+
+      function openCover() {
+        if (started || !cover.classList.contains("ready")) return;
+        started = true;
+        clearTimeout(autoTimer);
+
+        cover.classList.add("pressed", "open");
+
+        setTimeout(() => {
+          cover.classList.add("gone");
+          playTextAnimation();
+        }, 1550);
+      }
+
+      coverBtn.addEventListener("click", openCover);
+
+      async function startCoverText() {
+        await Promise.race([document.fonts ? document.fonts.ready : wait(0), wait(1500)]);
+        const title = document.getElementById("coverTitle");
+        title.textContent = title.dataset.text;
+        showElement("coverTitle");
+        showElement("coverTitle", "fall");
+        await new Promise(resolve => {
+          title.addEventListener("animationend", resolve, { once: true });
+          setTimeout(resolve, 1600);
+        });
+        await wait(250);
+        await typeWriter(document.getElementById("coverName"), 110);
+        await wait(300);
+
+        /* Chữ bìa đã hiện hết: bật nút nhấp nháy, cho bấm, bắt đầu đếm 8s */
+        cover.classList.add("ready");
+        coverBar.classList.add("run");
+        autoTimer = setTimeout(openCover, AUTO_OPEN_MS);
+      }
+
+      window.addEventListener("resize", resizeFrame);
+
+      /* =========================
+         CONFETTI + PHÁO HOA quanh đồng hồ đếm ngược
+      ========================= */
+      const fx = document.getElementById("fx");
+      const fctx = fx.getContext("2d");
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const COLORS = ["#ff4e68", "#00b9f2", "#6d20d9", "#ffb000", "#68d900", "#ff8fd8"];
+      const GRAVITY = 0.3;
+
+      let particles = [];
+      let rafId = null;
+      let lastT = 0;
+      let dpr = 1;
+      let burstTimer = null;
+
+      const rnd = (a, b) => a + Math.random() * (b - a);
+      const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+      const unit = () => (window.innerWidth < 500 ? 0.75 : 1);
+
+      function sizeCanvas() {
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        fx.width = Math.round(window.innerWidth * dpr);
+        fx.height = Math.round(window.innerHeight * dpr);
+      }
+
+      const speedFor = reach => Math.sqrt(2 * GRAVITY * reach);
+
+      function cannon(x, y, aMin, aMax, count) {
+        const u = unit();
+        for (let i = 0; i < count; i++) {
+          const a = rnd(aMin, aMax) * Math.PI / 180;
+          const sp = speedFor(window.innerHeight * rnd(0.25, 0.6)) * 1.12;
+          particles.push({
+            type: "confetti", x, y,
+            vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+            g: GRAVITY, drag: 0.985,
+            w: rnd(3.5, 6.5) * u, h: rnd(6, 11) * u,
+            rot: rnd(0, 6.28), vr: rnd(-0.3, 0.3),
+            tilt: rnd(0, 6.28), vt: rnd(0.1, 0.3),
+            color: pick(COLORS), life: 1, decay: rnd(0.004, 0.008)
+          });
+        }
+      }
+
+      function rocket(x, y, reach) {
+        particles.push({
+          type: "rocket", x, y,
+          vx: rnd(-0.8, 0.8), vy: -speedFor(reach),
+          g: GRAVITY, color: pick(COLORS), life: 1
+        });
+      }
+
+      function explode(x, y, color) {
+        const u = unit();
+        const count = 56;
+        for (let i = 0; i < count; i++) {
+          const a = (i / count) * Math.PI * 2 + rnd(-0.05, 0.05);
+          const sp = rnd(1.9, 6.2) * u;
+          particles.push({
+            type: "spark", x, y,
+            vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+            g: 0.09, drag: 0.965,
+            r: rnd(0.9, 1.7) * u,
+            color: Math.random() < 0.7 ? color : pick(COLORS),
+            life: 1, decay: rnd(0.016, 0.026)
+          });
+        }
+      }
+
+      function fireBurst() {
+        const r = countdown.getBoundingClientRect();
+        if (r.bottom < 0 || r.top > window.innerHeight) return;
+
+        const y = r.bottom - r.height * 0.15;
+        const vh = window.innerHeight;
+
+        cannon(r.left, y, -85, -50, 55);
+        cannon(r.right, y, -130, -95, 55);
+
+        [0.18, 0.5, 0.82].forEach((k, n) => {
+          setTimeout(() => {
+            rocket(r.left + r.width * k, y, vh * rnd(0.4, 0.62));
+            ensureLoop();
+          }, 250 + n * 320);
+        });
+
+        ensureLoop();
+      }
+
+      function updateParticles(dt) {
+        const out = [];
+        for (const p of particles) {
+          if (p.type === "rocket") {
+            p.vy += p.g * dt;
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            out.push({
+              type: "spark", x: p.x, y: p.y, vx: rnd(-0.4, 0.4), vy: rnd(0, 1),
+              g: 0.05, drag: 0.95, r: rnd(0.8, 1.3), color: p.color, life: 1, decay: 0.07
+            });
+            if (p.vy >= -1.2) {
+              explode(p.x, p.y, p.color);
+              continue;
+            }
+            out.push(p);
+            continue;
+          }
+
+          p.vx *= Math.pow(p.drag, dt);
+          p.vy = p.vy * Math.pow(p.drag, dt) + p.g * dt;
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.life -= p.decay * dt;
+
+          if (p.type === "confetti") {
+            p.rot += p.vr * dt;
+            p.tilt += p.vt * dt;
+          }
+          if (p.life > 0 && p.y < window.innerHeight + 60) out.push(p);
+        }
+        particles = out;
+      }
+
+      function drawParticles() {
+        fctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        fctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+        for (const p of particles) {
+          if (p.type === "rocket") {
+            fctx.globalAlpha = 1;
+            fctx.fillStyle = p.color;
+            fctx.beginPath();
+            fctx.arc(p.x, p.y, 2.3, 0, Math.PI * 2);
+            fctx.fill();
+          } else if (p.type === "spark") {
+            fctx.globalAlpha = Math.max(p.life, 0);
+            fctx.strokeStyle = p.color;
+            fctx.lineWidth = p.r;
+            fctx.lineCap = "round";
+            fctx.beginPath();
+            fctx.moveTo(p.x, p.y);
+            fctx.lineTo(p.x - p.vx * 1.8, p.y - p.vy * 1.8);
+            fctx.stroke();
+          } else {
+            fctx.save();
+            fctx.globalAlpha = Math.min(1, Math.max(p.life * 1.6, 0));
+            fctx.translate(p.x, p.y);
+            fctx.rotate(p.rot);
+            fctx.scale(1, Math.cos(p.tilt));
+            fctx.fillStyle = p.color;
+            fctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+            fctx.restore();
+          }
+        }
+        fctx.globalAlpha = 1;
+      }
+
+      function frameFx(t) {
+        const dt = Math.min((t - lastT) / 16.67, 3);
+        lastT = t;
+        updateParticles(dt);
+        drawParticles();
+        rafId = particles.length ? requestAnimationFrame(frameFx) : null;
+        if (!rafId) fctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      }
+
+      function ensureLoop() {
+        if (rafId) return;
+        lastT = performance.now();
+        rafId = requestAnimationFrame(frameFx);
+      }
+
+      function startFireworks() {
+        if (burstTimer || reduceMotion) return;
+        fireBurst();
+        burstTimer = setInterval(fireBurst, 4200);
+      }
+
+      function stopFireworks() {
+        clearInterval(burstTimer);
+        burstTimer = null;
+      }
+
+      new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            countdown.classList.add("show");
+            startFireworks();
+          } else {
+            stopFireworks();
+          }
+        });
+      }, { threshold: 0.5 }).observe(countdown);
+
+      sizeCanvas();
+      window.addEventListener("resize", sizeCanvas);
+
+      const phoneWrap = document.getElementById("phoneWrap");
+      new IntersectionObserver((entries, obs) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            phoneWrap.classList.add("show");
+            obs.disconnect();
+          }
+        });
+      }, { rootMargin: "-30% 0px -30% 0px" }).observe(phoneWrap);
+
+      /* Cá nhân hóa tên + lời nhắn theo ?g=ma-nguoi */
+      (function personalize() {
+        const key = (new URLSearchParams(location.search).get("g") || "").trim().toLowerCase();
+        const guest = (window.GUESTS && window.GUESTS[key]) || window.DEFAULT_GUEST;
+
+        /* Chữ cố định ở page 2, đổi danh xưng theo từng người:
+           {me} = danh xưng của mình, {you} = cách gọi người nhận */
+        const me = (guest && guest.me) || "mình";
+        const you = (guest && guest.you) || "bạn";
+        const fill = tpl => tpl.replace(/\{me\}/g, me).replace(/\{you\}/g, you);
+
+        document.getElementById("contactNote").textContent =
+          fill("Để thuận tiện cho việc gặp nhau, {you} liên hệ {me} qua:");
+        document.getElementById("photoNote").textContent =
+          fill("Đây là ngày mà {me} muốn lưu giữ những khoảnh khắc đẹp nhất của thời sinh viên.\nHy vọng những bức ảnh thanh xuân tươi đẹp của {me} sẽ có sự góp mặt của {you}!");
+
+        if (!guest) return;
+
+        const nameEl = document.getElementById("guestName");
+        const introEl = document.getElementById("intro");
+
+        nameEl.dataset.text = guest.name;
+        introEl.dataset.text = guest.message;
+
+        /* Tên dài thì thu nhỏ chữ để không tràn khung */
+        const len = Array.from(guest.name).length;
+        if (len > 10) nameEl.style.fontSize = Math.max(50, Math.floor(85 * 10 / len)) + "px";
+
+        document.title = "Thư mời tốt nghiệp - " + guest.name;
+      })();
+
+      stage.scrollTop = 0;
+      resizeFrame();
+      updateCountdown();
+      setInterval(updateCountdown, 1000);
+
+      /* Chỉ hiện thiệp khi ảnh bìa đã tải + giải mã xong (tối đa chờ 8s) */
+      async function boot() {
+        const imgs = [...cover.querySelectorAll("img")];
+
+        const loadImg = img => new Promise(resolve => {
+          if (img.complete && img.naturalWidth) return resolve();
+          img.addEventListener("load", resolve, { once: true });
+          img.addEventListener("error", resolve, { once: true });
+        });
+
+        await Promise.race([
+          Promise.all([...imgs.map(loadImg), document.fonts ? document.fonts.ready : null]),
+          wait(8000)
+        ]);
+
+        await Promise.race([
+          Promise.all(imgs.map(i => (i.decode ? i.decode().catch(() => { }) : null))),
+          wait(1500)
+        ]);
+
+        /* Tải trước các ảnh còn lại trong lúc người xem nhìn bìa */
+        ["images/page1.png", "images/page2.png", "images/icon.png"].forEach(src => {
+          new Image().src = src;
+        });
+
+        frame.classList.add("ready");
+        document.getElementById("loader").classList.add("hide");
+        startCoverText();
+      }
+
+      boot();
+    })();
+  </script>
+</body>
+
+</html>

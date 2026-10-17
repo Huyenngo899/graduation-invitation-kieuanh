@@ -1,0 +1,10 @@
+{
+  "name": "graduation-invite",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Web thư mời tốt nghiệp (HTML/CSS/JS thuần, deploy lên Vercel)",
+  "scripts": {
+    "dev": "npx serve . -l 3000",
+    "deploy": "npx vercel --prod"
+  }
+}
