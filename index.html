@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <title>Thư mời tốt nghiệp</title>
   <meta name="description" content="Thư mời tốt nghiệp">
@@ -33,7 +33,7 @@
     body { overflow: hidden; }
 
     /* ===== MÀN HÌNH CHỜ ===== */
-    
+
     .loader {
       position: fixed;
       inset: 0;
@@ -99,6 +99,10 @@
       opacity: 1;
       transition: opacity 0.4s ease;
     }
+
+    /* Trước khi mở bìa: ẩn toàn bộ phía sau bìa, không bao giờ lộ page 1 */
+    .frame.pre { background: #262939; }
+    .frame.pre > *:not(.cover) { visibility: hidden; }
 
     /* ===== ẢNH NỀN PAGE 1 ===== */
     .background-image {
@@ -173,9 +177,6 @@
     /* Đáy page 2 mờ dần sang màu nền (giống đáy page 1) */
     .page2-bottom-fade {
       position: absolute;
-      /* ===== CHỈNH Ở ĐÂY =====
-         --fade  : độ dài đoạn mờ dần (tính từ trên xuống), càng lớn càng mờ từ xa
-         --solid : độ dài đoạn màu #fdf9f4 đặc ở sát đáy page 2 */
       --fade: 300px;
       --solid: 20px;
       --end: 4040px; /* đáy page 2 */
@@ -185,7 +186,6 @@
       top: calc(var(--end) - var(--fade) - var(--solid));
       z-index: 2;
       pointer-events: none;
-      /* nhiều điểm dừng theo đường cong ease; sau điểm cuối là màu đặc */
       background: linear-gradient(to bottom,
           rgba(253, 249, 244, 0) 0,
           rgba(253, 249, 244, 0.03) calc(var(--fade) * 0.1),
@@ -495,8 +495,7 @@
       opacity: 1;
     }
 
-    /* Icon trước giờ và trước tên trường: tô bằng currentColor nên luôn trùng màu chữ.
-       Chỉnh cỡ icon bằng width/height (em), khoảng cách tới chữ bằng margin-right. */
+    /* Icon trước giờ và trước tên trường: tô bằng currentColor nên luôn trùng màu chữ. */
     .event-time,
     .university {
       --icon-size: 0.85em;
@@ -518,7 +517,7 @@
 
     /* Đồng hồ */
     .event-time {
-      --icon-y: -0.2em; /* càng âm icon càng thấp, càng gần 0 icon càng cao */
+      --icon-y: -0.2em;
       --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='none' stroke='black' stroke-width='2.2'/%3E%3Cpath d='M12 6.8V12l3.6 2.2' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     }
 
@@ -632,9 +631,7 @@
       z-index: 6;
     }
 
-    /* ===== CHỮ CỐ ĐỊNH Ở PAGE 2 =====
-       Toạ độ y tính từ đầu page 2 (page 2 bắt đầu ở y = 2120 của khung):
-       top = 2120 + y */
+    /* ===== CHỮ CỐ ĐỊNH Ở PAGE 2 ===== */
     .page2-text {
       position: absolute;
       left: 0;
@@ -645,19 +642,17 @@
       white-space: pre-line;
       font-family: "Cormorant Garamond", serif;
       font-weight: 500;
-      line-height: 1.2; /* khoảng cách giữa các dòng, giảm để các dòng sát nhau hơn */
+      line-height: 1.2;
       color: #000000;
       pointer-events: none;
     }
 
-    /* "Để thuận tiện cho việc gặp nhau...": y = 995 */
     .contact-note {
       top: 3115px;
       font-size: 20px;
       white-space: nowrap; /* luôn 1 dòng */
     }
 
-    /* "Đây là ngày mà mình muốn lưu giữ...": y = 1120 */
     .photo-note {
       top: 3240px;
       font-size: 25px;
@@ -666,7 +661,7 @@
     .phone-wrap {
       position: absolute;
       left: 393.9px;
-      top: 3167.6px; /* y = 1047.6 trong page 2 */
+      top: 3167.6px;
       width: 292.2px;
       height: 48px;
       z-index: 6;
@@ -949,7 +944,7 @@
 
     .cover:not(.ready) .cover-btn img {
       animation: none;
-      opacity: 0.55; /* đổi thành 0 nếu muốn ẩn hẳn */
+      opacity: 0.55;
     }
 
     .cover:not(.ready) .btn-glow,
@@ -1076,7 +1071,7 @@
   <div class="stage locked" id="stage">
     <div class="scroll-space" id="scrollSpace"></div>
 
-    <div class="frame" id="frame">
+    <div class="frame pre" id="frame">
 
       <!-- ================= PAGE 1 ================= -->
 
@@ -1220,7 +1215,8 @@
     </svg>
   </div>
 
-  <script src="guests.js"></script>
+  <!-- Đổi v=2 thành v=3, v=4... mỗi lần sửa guests.js để điện thoại không dùng bản cũ -->
+  <script src="guests.js?v=2"></script>
   <script>
     (() => {
       const PAGE_W = 1080;
@@ -1243,6 +1239,7 @@
       let autoTimer = null;
       let lastW = 0;
       let lastH = 0;
+      let pageReady = Promise.resolve();
 
       /* Co khung sao cho nguyên page 1 luôn vừa màn hình */
       function resizeFrame() {
@@ -1409,6 +1406,7 @@
         started = true;
         clearTimeout(autoTimer);
 
+        frame.classList.remove("pre"); /* hiện page 1 phía sau bìa (đã giải mã sẵn) */
         cover.classList.add("pressed", "open");
 
         setTimeout(() => {
@@ -1433,6 +1431,9 @@
         await typeWriter(document.getElementById("coverName"), 110);
         await wait(300);
 
+        /* Chờ ảnh page 1, page 2 tải + giải mã xong rồi mới cho bấm */
+        await pageReady;
+
         /* Chữ bìa đã hiện hết: bật nút nhấp nháy, cho bấm, bắt đầu đếm 8s */
         cover.classList.add("ready");
         coverBar.classList.add("run");
@@ -1440,6 +1441,10 @@
       }
 
       window.addEventListener("resize", resizeFrame);
+      window.addEventListener("orientationchange", () => {
+        lastW = 0;
+        setTimeout(resizeFrame, 300);
+      });
 
       /* =========================
          CONFETTI + PHÁO HOA quanh đồng hồ đếm ngược
@@ -1648,15 +1653,51 @@
         });
       }, { rootMargin: "-30% 0px -30% 0px" }).observe(phoneWrap);
 
-      /* Cá nhân hóa tên + lời nhắn theo ?g=ma-nguoi */
+      /* Cá nhân hóa tên + lời nhắn theo ?g=ma-nguoi (hoặc #ma-nguoi) */
       (function personalize() {
-        const key = (new URLSearchParams(location.search).get("g") || "").trim().toLowerCase();
-        const guest = (window.GUESTS && window.GUESTS[key]) || window.DEFAULT_GUEST;
+        const safeDecode = s => { try { return decodeURIComponent(s); } catch (e) { return s; } };
+
+        /* "Phạm Ngọc Linh" / "pham-ngoc-linh" / "Pham_Ngoc Linh" → "pham-ngoc-linh" */
+        const norm = s => String(s || "")
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          .replace(/đ/gi, "d").toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+        /* Đọc mã khách: ?g=... → #... → bản đã lưu trong máy */
+        const params = new URLSearchParams(location.search);
+        let raw = params.get("g") || params.get("G") || "";
+        if (!raw && location.hash) {
+          raw = safeDecode(location.hash.slice(1)).replace(/^\/?(g=)?/i, "");
+        }
+
+        let key = norm(safeDecode(raw));
+        try {
+          if (key) localStorage.setItem("guestKey", key);
+          else key = localStorage.getItem("guestKey") || "";
+        } catch (e) { }
+
+        /* Chuẩn hoá luôn các khoá trong guests.js để gõ hoa/thường hay có dấu đều khớp */
+        const table = {};
+        Object.keys(window.GUESTS || {}).forEach(k => { table[norm(k)] = window.GUESTS[k]; });
+
+        const fallback = window.DEFAULT_GUEST || {};
+        let guest = table[key];
+
+        /* Không có trong danh sách: vẫn hiện tên từ link thay vì bỏ trống */
+        if (!guest && key) {
+          guest = {
+            name: key.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
+            message: fallback.message,
+            me: fallback.me,
+            you: fallback.you
+          };
+        }
+        if (!guest) guest = fallback;
 
         /* Chữ cố định ở page 2, đổi danh xưng theo từng người:
            {me} = danh xưng của mình, {you} = cách gọi người nhận */
-        const me = (guest && guest.me) || "mình";
-        const you = (guest && guest.you) || "bạn";
+        const me = guest.me || "mình";
+        const you = guest.you || "bạn";
         const fill = tpl => tpl.replace(/\{me\}/g, me).replace(/\{you\}/g, you);
 
         document.getElementById("contactNote").textContent =
@@ -1664,19 +1705,17 @@
         document.getElementById("photoNote").textContent =
           fill("Đây là ngày mà {me} muốn lưu giữ những khoảnh khắc đẹp nhất của thời sinh viên.\nHy vọng những bức ảnh thanh xuân tươi đẹp của {me} sẽ có sự góp mặt của {you}!");
 
-        if (!guest) return;
-
         const nameEl = document.getElementById("guestName");
         const introEl = document.getElementById("intro");
 
-        nameEl.dataset.text = guest.name;
-        introEl.dataset.text = guest.message;
-
-        /* Tên dài thì thu nhỏ chữ để không tràn khung */
-        const len = Array.from(guest.name).length;
-        if (len > 10) nameEl.style.fontSize = Math.max(50, Math.floor(85 * 10 / len)) + "px";
-
-        document.title = "Thư mời tốt nghiệp - " + guest.name;
+        if (guest.name) {
+          nameEl.dataset.text = guest.name;
+          /* Tên dài thì thu nhỏ chữ để không tràn khung */
+          const len = Array.from(guest.name).length;
+          if (len > 10) nameEl.style.fontSize = Math.max(50, Math.floor(85 * 10 / len)) + "px";
+          document.title = "Thư mời tốt nghiệp - " + guest.name;
+        }
+        if (guest.message) introEl.dataset.text = guest.message;
       })();
 
       stage.scrollTop = 0;
@@ -1704,10 +1743,19 @@
           wait(1500)
         ]);
 
-        /* Tải trước các ảnh còn lại trong lúc người xem nhìn bìa */
-        ["images/page1.png", "images/page2.png", "images/icon.png"].forEach(src => {
-          new Image().src = src;
-        });
+        /* Trong lúc xem bìa: tải + giải mã sẵn ảnh thật của page 1, page 2 (tối đa 10s) */
+        const rest = [...document.querySelectorAll(".background-image img, #page2 img, #pageIcon")];
+        pageReady = Promise.race([
+          Promise.all(rest.map(img => new Promise(res => {
+            const done = () => (img.decode ? img.decode().catch(() => { }) : Promise.resolve()).then(res);
+            if (img.complete && img.naturalWidth) done();
+            else {
+              img.addEventListener("load", done, { once: true });
+              img.addEventListener("error", res, { once: true });
+            }
+          }))),
+          wait(10000)
+        ]);
 
         frame.classList.add("ready");
         document.getElementById("loader").classList.add("hide");
