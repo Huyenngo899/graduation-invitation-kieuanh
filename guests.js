@@ -7,7 +7,8 @@ window.DEFAULT_GUEST = {
 };
 
 /* Mỗi người một mã. Link gửi: index.html?g=ma-nguoi
-   Lời nhắn tự ghép theo xưng hô: me = danh xưng của mình, you = cách gọi người nhận */
+   Lời nhắn tự ghép theo xưng hô: me = danh xưng của mình, you = cách gọi người nhận
+   (tuỳ chọn) label = chữ thay cho "Thân mời:" */
 const T = (me, you) =>
   `Trong hành trình này của ${me} thật may mắn khi gặp được ${you}, vì vậy mà ${me} rất mong chờ để được gửi lời yêu thương này ....`;
 
@@ -41,5 +42,15 @@ window.GUESTS = {
   "chi-minh-hien": { name: "chị Minh Hiền", me: "em", you: "chị", message: T("em", "chị") },
   "chi-ngoc-diep": { name: "chị Ngọc Diệp", me: "em", you: "chị", message: T("em", "chị") },
   "anh-the-anh": { name: "anh Thế Anh", me: "em", you: "anh", message: T("em", "anh") },
-  "anh-duy-luan": { name: "anh Duy Luận", me: "em", you: "anh", message: T("em", "anh") }
+  "bao-ngoc": { name: "Bảo Ngọc", me: "mình", you: "bạn", message: T("mình", "bạn") },
+  "anh-duy-luan": { name: "anh Duy Luận", me: "em", you: "anh", message: T("em", "anh") },
+
+  /* Gửi cả nhà: lời nhắn riêng, xưng "con/cháu", gọi "nhà mình", mở đầu bằng "Kính gửi:" */
+  "mca-nng": {
+    label: "Kính gửi:",
+    name: "Cả nhà mình",
+    me: "con/cháu",
+    you: "nhà mình",
+    message: "Trong hành trình này của con/cháu rất biết ơn vì có cả nhà cùng đồng hành, vì vậy mà con/cháu rất mong chờ để được gửi lời yêu thương này ...."
+  }
 };
