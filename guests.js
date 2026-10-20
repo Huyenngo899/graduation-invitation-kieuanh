@@ -44,6 +44,7 @@ window.GUESTS = {
   "anh-the-anh": { name: "anh Thế Anh", me: "em", you: "anh", message: T("em", "anh") },
   "bao-ngoc": { name: "Bảo Ngọc", me: "mình", you: "bạn", message: T("mình", "bạn") },
   "anh-duy-luan": { name: "anh Duy Luận", me: "em", you: "anh", message: T("em", "anh") },
+  "thuy-hien": { name: "Thủy Hiền", me: "mình", you: "bạn", message: T("mình", "bạn") },
 
   /* Gửi cả nhà: lời nhắn riêng, xưng "con/cháu", gọi "nhà mình", mở đầu bằng "Kính gửi:" */
   "mca-nng": {
