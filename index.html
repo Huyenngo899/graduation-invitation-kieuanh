@@ -1737,6 +1737,32 @@
       boot();
     })();
   </script>
+  <script>
+  /* Chặn nhẹ: chuột phải, kéo ảnh, bôi đen, phím tắt xem nguồn / DevTools */
+  (() => {
+    const block = e => { e.preventDefault(); return false; };
+
+    document.addEventListener("contextmenu", block);
+    document.addEventListener("dragstart", block);
+    document.addEventListener("selectstart", block);
+
+    document.addEventListener("keydown", e => {
+      const k = e.key.toLowerCase();
+      const ctrl = e.ctrlKey || e.metaKey;
+
+      if (
+        e.key === "F12" ||
+        (ctrl && ["u", "s", "p"].includes(k)) ||            // Xem nguồn, Lưu, In
+        (ctrl && e.shiftKey && ["i", "j", "c", "k"].includes(k)) || // DevTools
+        (e.metaKey && e.altKey && ["i", "j", "u"].includes(k))      // macOS
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    }, true);
+  })();
+</script>
 </body>
 
 </html>
